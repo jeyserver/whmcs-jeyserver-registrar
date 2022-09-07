@@ -1,0 +1,34 @@
+parameters:
+    level: 8
+    fileExtensions:
+        - php
+        - module
+        - inc
+    paths:
+        - .
+    scanFiles:
+        - modules/registrars/jeyserver/jeyserver.php
+    scanDirectories:
+        - modules
+        - tests
+        - resources
+    excludePaths:
+        analyse:
+            - build
+            - node_modules
+            - modules/registrars/jeyserver/vendor
+            - tests
+            - */whmcs-foundation
+            - */whmcs-base
+    bootstrapFiles:
+        - tests/_bootstrap.phpstan.php
+        - modules/registrars/jeyserver/vendor/autoload.php
+    ignoreErrors:
+        -
+            message: '#Constant ROOTDIR not found.#'
+            path: resources/domains/additionalfields.php
+        -
+            message: '#Function add_hook not found#'
+            path: modules/registrars/jeyserver/hooks.php
+        - '#Constant ROOTDIR not found#'
+        - '#Class WHMCS\\/* was not found while trying to analyse it#'

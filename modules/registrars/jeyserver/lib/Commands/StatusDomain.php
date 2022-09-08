@@ -3,8 +3,7 @@
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
-use RunTimeException;
-use WHMCS\Module\Registrar\Jeyserver\Helpers\ZoneInfo;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\RunTimeException;
 
 class StatusDomain extends CommandBase
 {
@@ -30,17 +29,17 @@ class StatusDomain extends CommandBase
 
     public function execute(): void
     {
-        $response = $this->api->getClient()->post('api/update', [
+        $this->setResponse($this->api->getClient()->post('api/update', [
             'form_params' => [
                 'api' => 1,
                 'domain' => $this->params['domain'],
                 'maxAge' => 172800, // 2 days
             ],
-        ]);
-        $result = $response->json();
-        $this->setResult($result);
+        ]));
+        /** @var array{service:array{is_lock:bool,datend:int,status:int}} */
+        $result = $this->getResult();
         if (!$this->wasSuccessful()) {
-            throw new RunTimeException('JeyServer: can not get status of domain! (' . json_encode($result) . ')');
+            throw new RunTimeException('JeyServer: can not get status of domain! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
         $this->isLocked = $result['service']['is_lock'];
         $this->expireDate = (int) $result['service']['datend'];

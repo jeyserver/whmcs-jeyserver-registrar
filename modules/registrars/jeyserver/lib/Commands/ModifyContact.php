@@ -2,11 +2,12 @@
 
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
-use BadMethodCallException;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\BadMethodCallException;
 
 class ModifyContact extends CommandBase
 {
 
+    /** @var array<string,mixed> */
     protected array $contact;
 
     /**

@@ -4,22 +4,23 @@ namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
 use ReflectionClass;
+use Psr\Http\Message\ResponseInterface;
 use WHMCS\Module\Registrar\Jeyserver\APIClient;
 
 abstract class CommandBase
 {
     public APIClient $api;
     /**
-     * @var array<string, mixed>
+     * @var array<string,mixed>
      */
     public array $params;
 
+    private ?ResponseInterface $response = null;
 
-    private ?array $result = null;
     /**
-     * @var array<string>
+     * @var array<string,mixed>|null
      */
-    private array $errors = [];
+    private ?array $result = null;
 
     /**
      * @param array<string, mixed> $params
@@ -27,13 +28,8 @@ abstract class CommandBase
      */
     public function __construct(array $params)
     {
-        file_put_contents("/tmp/whmcs-jeyserver-registrar-command-base.log", print_r($params, true) . "\n\n" . str_repeat('-', 50) . "\n\n", FILE_APPEND);
-
         $this->api = new APIClient($params);
         $this->params = $params;
-        if (isset($params["sld"]) && isset($params["tld"])) {
-            $this->domainName = $params["sld"] . "." . $params["tld"];
-        }
     }
 
 
@@ -43,9 +39,23 @@ abstract class CommandBase
      */
     abstract public function execute(): void;
 
-    public function setResult(?array $result): void
+    public function setResponse(ResponseInterface $response): void
     {
-        $this->result = $result;
+        $this->response = $response;
+        $this->result = json_decode((string)$response->getBody(), true);
+    }
+
+    public function getResponse(): ?ResponseInterface
+    {
+        return $this->response;
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    public function getResult(): ?array
+    {
+        return $this->result;
     }
 
     /**
@@ -57,10 +67,10 @@ abstract class CommandBase
     }
 
     /**
-     * @return string
+     * @return array<mixed>
      */
     public function getErrors(): array
     {
-        return $this->result['error'];
+        return $this->result['error'] ?? [];
     }
 }

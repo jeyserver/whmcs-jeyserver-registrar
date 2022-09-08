@@ -36,8 +36,6 @@ use WHMCS\Module\Registrar\Jeyserver\Commands\UnlockTransfer;
 use WHMCS\Module\Registrar\Jeyserver\Commands\RenewDomain;
 use WHMCS\Module\Registrar\Jeyserver\Commands\StatusAccount;
 use WHMCS\Module\Registrar\Jeyserver\Commands\StatusDomain;
-use WHMCS\Module\Registrar\Jeyserver\Commands\StatusDomainTransfer;
-use WHMCS\Module\Registrar\Jeyserver\Commands\TransferDomain;
 use WHMCS\Module\Registrar\Jeyserver\Helpers\Contact;
 use WHMCS\Module\Registrar\Jeyserver\APIClient;
 use WHMCS\Module\Registrar\Jeyserver\Http;
@@ -52,19 +50,20 @@ require_once __DIR__ . '/vendor/autoload.php';
  */
 function jeyserver_getConfigArray(array $params): array
 {
-    $additionalfieldsFilePath = ROOTDIR . '/resources/domains/additionalfields.php';
-    $additionalfieldsCode = "if (is_file('{$additionalfieldsFilePath}')) {\n\trequire_once '{$additionalfieldsFilePath}';\n}";
+    $whmcsAfFile = ROOTDIR . '/resources/domains/additionalfields.php';
+    $jeyserverAfFile = realpath(__DIR__ . '/additionalfields.php');
+    $additionalfieldsCode = "if (is_file('{$jeyserverAfFile}')) {\n\trequire '{$jeyserverAfFile}';\n}";
 
-    if (!is_file($additionalfieldsFilePath)) {
-        file_put_contents($additionalfieldsFilePath, "<?php\n\n" . $additionalfieldsCode . "\n\n");
-    } elseif (is_readable($additionalfieldsFilePath)) {
-        $additionalfieldsFileContent = file_get_contents($additionalfieldsFilePath);
+    if (!is_file($whmcsAfFile)) {
+        file_put_contents($whmcsAfFile, "<?php\n\n" . $additionalfieldsCode . "\n\n");
+    } elseif (is_readable($whmcsAfFile)) {
+        $whmcsAfFileContent = file_get_contents($whmcsAfFile);
         if (
-            $additionalfieldsFileContent !== false and
-            stripos($additionalfieldsFileContent, 'jeyserver/lib/additionalfields.php') === false and
-            is_writable($additionalfieldsFilePath)
+            $whmcsAfFileContent !== false and
+            stripos($whmcsAfFileContent, $jeyserverAfFile) === false and
+            is_writable($whmcsAfFile)
         ) {
-            file_put_contents($additionalfieldsFilePath, $additionalfieldsFileContent . "\n\n" . $additionalfieldsCode . "\n\n");
+            file_put_contents($whmcsAfFile, $whmcsAfFileContent . "\n\n" . $additionalfieldsCode . "\n\n");
         }
     }
 
@@ -82,6 +81,7 @@ function jeyserver_getConfigArray(array $params): array
         ],
         'jeyserver_api_key' => [
             'FriendlyName' => 'API Key',
+            'LangVar' => 'searchOurKnowledgebase',
             'Type' => 'text',
             'Size' => '25',
             'Default' => '',
@@ -102,68 +102,6 @@ function jeyserver_config_validate($params): void
         throw new InvalidConfiguration('The API Key Should Be String!');
     }
 }
-
-/**
- * Check Domain Availability.
- *
- * Determine if a domain or group of domains are available for
- * registration or transfer.
- *
- * @param array<string, mixed> $params common module parameters
- * @return array<string, string>|ResultsList<SearchResult> An ArrayObject based collection of \WHMCS\Domains\DomainLookup\SearchResult results
- * @throws Exception Upon domain availability check failure.
- * @see \WHMCS\Domains\DomainLookup\ResultsList
- * @see https://developers.whmcs.com/domain-registrars/module-parameters/
- * @see \WHMCS\Domains\DomainLookup\SearchResult
- */
-function jeyserver_CheckAvailability(array $params)
-{
-    return new ResultsList();
-    die;
-
-    /*
-
-    $status = SearchResult::STATUS_NOT_REGISTERED;
-        break;
-    case 211:
-        $status = SearchResult::STATUS_REGISTERED;
-        break;
-    default:
-        $status = SearchResult::STATUS_TLD_NOT_SUPPORTED;
-
-    */
-
-    /*
-    try {
-        $tldsToInclude = $params['tldsToInclude'];
-        $results = new ResultsList();
-
-        foreach (array_chunk($tldsToInclude, 32) as $tlds) {
-            $checkDomains = new CheckDomains($params, $tlds);
-            $checkDomains->execute();
-            $i = 0;
-            foreach ($checkDomains->getResults() as $searchResult) {
-                switch (substr($checkDomains->api->properties["DOMAINCHECK"][$i++], 0, 3)) {
-                    case 210:
-                        $status = SearchResult::STATUS_NOT_REGISTERED;
-                        break;
-                    case 211:
-                        $status = SearchResult::STATUS_REGISTERED;
-                        break;
-                    default:
-                        $status = SearchResult::STATUS_TLD_NOT_SUPPORTED;
-                }
-                $searchResult->setStatus($status);
-                $results->append($searchResult);
-            }
-        }
-        return $results;
-    } catch (Exception $ex) {
-        return ['error' => $ex->getMessage()];
-    }
-    */
-}
-
 
 /**
  * Register a domain.

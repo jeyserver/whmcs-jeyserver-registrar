@@ -25,10 +25,10 @@ parameters:
         - modules/registrars/jeyserver/vendor/autoload.php
     ignoreErrors:
         -
+            message: '#Class WHMCS\\Exception was not found while trying to analyse it - discovering symbols is probably not configured properly.#'
+            paths:
+                - modules/registrars/jeyserver/jeyserver.php
+        -
             message: '#Constant ROOTDIR not found.#'
             path: resources/domains/additionalfields.php
-        -
-            message: '#Function add_hook not found#'
-            path: modules/registrars/jeyserver/hooks.php
         - '#Constant ROOTDIR not found#'
-        - '#Class WHMCS\\/* was not found while trying to analyse it#'

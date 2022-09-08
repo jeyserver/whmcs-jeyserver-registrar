@@ -3,10 +3,8 @@
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
-use RunTimeException;
 use WHMCS\Database\Capsule;
-use WHMCS\Module\Registrar\Jeyserver\Features\Contact;
-use WHMCS\Module\Registrar\Jeyserver\Helpers\AdditionalFields;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\RunTimeException;
 
 class ChangeDNS extends CommandBase
 {
@@ -25,17 +23,16 @@ class ChangeDNS extends CommandBase
             ];
         }
 
-        $response = $this->api->getClient()->post('api/changeDns', [
+        $this->setResponse($this->api->getClient()->post('api/changeDns', [
             'form_params' => [
                 'api' => 1,
                 'domain' => $this->params['domain'],
                 'dnses' => $dnses,
             ],
-        ]);
-        $result = $response->json();
-        $this->setResult($result);
+        ]));
+
         if (!$this->wasSuccessful()) {
-            throw new RunTimeException('JeyServer: can not chnage dns of domain! (' . json_encode($result) . ')');
+            throw new RunTimeException('JeyServer: can not chnage dns of domain! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
     }
 }

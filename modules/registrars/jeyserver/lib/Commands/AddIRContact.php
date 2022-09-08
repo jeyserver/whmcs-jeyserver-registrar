@@ -3,13 +3,14 @@
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
-use WHMCS\Module\Registrar\Jeyserver\Http\Exceptions\ResponseException;
+use WHMCS\Database\Capsule;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\RunTimeException;
 
 class AddIRContact extends CommandBase
 {
-    protected const IR_REGISTRAR_ID = 2;
-    protected const GENERAL_REGISTRAR_ID = 4;
+    protected const REGISTRAR_ID = 2;
 
+    /** @var array<string,mixed> */
     private array $contact = [];
 
     private ?string $handle = null;
@@ -20,7 +21,6 @@ class AddIRContact extends CommandBase
     public function __construct(array $params, array $contact)
     {
         parent::__construct($params);
-
         $this->contact = $contact;
     }
 
@@ -29,17 +29,31 @@ class AddIRContact extends CommandBase
      */
     public function execute(): void
     {
-        $response = $this->api->getClient()->post('api/create-panel', [
+        if (!isset($this->params['additionalfields']['IRNIC-Handle']) or
+            !preg_match('/^[a-z]{2}[0-9]{2,5}-irnic$/i', $this->params['additionalfields']['IRNIC-Handle'])
+        ) {
+            throw new RunTimeException('the IRNIC-Handle is invalid! (' . $this->params['additionalfields']['IRNIC-Handle'] . ')');
+        }
+
+        Capsule::table('tbldomainsadditionalfields')->insert(array(
+            'domainid' => $this->params['domainid'],
+            'name' => 'jeyserver_contact_information',
+            'value' => json_encode([
+                'IRNIC-Handle' => $this->params['additionalfields']['IRNIC-Handle'],
+            ]),
+        ));
+
+        $this->setResponse($this->api->getClient()->post('api/create-panel', [
             'form_params' => [
                 'registrar' => self::REGISTRAR_ID,
-                'sysnic_handler' => $this->contact['IRNic-Handler'],
+                'sysnic_handler' => $this->params['additionalfields']['IRNIC-Handle'],
             ],
-        ]);
-        $result = $response->json();
-        $this->setResult($result);
+        ]));
 
+        /** @var array{panel:string} */
+        $result = $this->getResult();
         if (!$this->wasSuccessful()) {
-            throw new RunTimeException('can not add contact in jeyserver!');
+            throw new RunTimeException('can not add contact in jeyserver! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
         $this->handle = $result['panel'];
     }

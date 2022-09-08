@@ -2,7 +2,7 @@
 
 namespace WHMCS\Module\Registrar\Jeyserver;
 
-use WHMCS\Module\Registrar\Jeyserver\Http\{Client, ClientFactory};
+use GuzzleHttp\Client;
 use WHMCS\Domain\Registrar\Domain;
 use Exception;
 
@@ -42,7 +42,10 @@ class APIClient
     public function getClient(array $options = []): Client
     {
         if (!$this->client) {
-            $headers = [];
+            $headers = [
+                'Accept'        => 'application/json',
+                'Authorization' => 'Bearer ' . $this->params['jeyserver_api_key'],
+            ];
             if (isset($GLOBALS["CONFIG"]["Version"]) and is_string($GLOBALS["CONFIG"]["Version"])) {
                 $headers['User-Agent'] = 'WHMCS(' . $GLOBALS["CONFIG"]["Version"] . ')-JeyServer-Registrar(' . JEYSERVER_VERSION . ')';
             } else {
@@ -54,11 +57,10 @@ class APIClient
             if (isset($GLOBALS["CONFIG"]["CompanyName"]) and is_string($GLOBALS["CONFIG"]["CompanyName"])) {
                 $headers['X-WHMCS-COMPANY-NAME'] = $GLOBALS["CONFIG"]["CompanyName"];
             }
-            $this->client = ClientFactory::getClient(array_replace_recursive(
+            $this->client = new Client(array_replace_recursive(
                 array(
                     'headers' => $headers,
-                    'base_uri' => 'http://jey.jey/fa/userpanel/domains/',
-                    'auth' => 'bearer ' . $this->params['jeyserver_api_key'],
+                    'base_uri' => 'https://www.jeyserver.com/fa/userpanel/domains/',
                     'query' => array(
                         'api' => 1,
                         'ajax' => 1,

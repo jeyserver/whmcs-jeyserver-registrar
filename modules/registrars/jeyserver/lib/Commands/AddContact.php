@@ -3,9 +3,8 @@
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
-use RunTimeException;
 use WHMCS\Database\Capsule;
-use WHMCS\Module\Registrar\Jeyserver\Http\Exceptions\ResponseException;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\RunTimeException;
 
 class AddContact extends CommandBase
 {
@@ -57,14 +56,13 @@ class AddContact extends CommandBase
             $params["{$prefix}_{$key}"] = $val;
         }
 
-        $response = $this->api->getClient()->post('api/create-panel', [
+        $this->setResponse($this->api->getClient()->post('api/create-panel', [
             'form_params' => $params,
-        ]);
-        $result = $response->json();
-        $this->setResult($result);
+        ]));
+        $result = $this->getResult();
 
         if (!$this->wasSuccessful()) {
-            throw new RunTimeException('JeyServer: can not add contact in jeyserver! (' . json_encode($result) . ')');
+            throw new RunTimeException('JeyServer: can not add contact in jeyserver! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
         /** @var array{panel:string} $result */
         $this->handle = $result['panel'];

@@ -3,10 +3,7 @@
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
-use RunTimeException;
-use WHMCS\Database\Capsule;
-use WHMCS\Module\Registrar\Jeyserver\Features\Contact;
-use WHMCS\Module\Registrar\Jeyserver\Helpers\AdditionalFields;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\RunTimeException;
 
 class UnlockTransfer extends CommandBase
 {
@@ -15,19 +12,18 @@ class UnlockTransfer extends CommandBase
      */
     public function execute(): void
     {
-        $response = $this->api->getClient()->post('api/unlock', [
+        $this->setResponse($this->api->getClient()->post('api/unlock', [
             'form_params' => [
                 'api' => 1,
                 'domain' => $this->params['domain'],
             ],
-        ]);
-        $result = $response->json();
-        $this->setResult($result);
+        ]));
+        $result = $this->getResult();
         if (!$this->wasSuccessful()) {
-            throw new RunTimeException('JeyServer: can not register domain! (' . json_encode($result) . ')');
+            throw new RunTimeException('JeyServer: can not register domain! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
         if (isset($result['is_lock']) and $result['is_lock']) {
-            throw new RunTimeException('[JeyServer]: something is wrong in unlock transfer from ourside! (' . json_encode($result) . ')');
+            throw new RunTimeException('[JeyServer]: something is wrong in unlock transfer from ourside! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
     }
 }

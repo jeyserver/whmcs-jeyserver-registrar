@@ -3,6 +3,7 @@
 namespace WHMCS\Module\Registrar\Jeyserver\Commands;
 
 use Exception;
+use WHMCS\Module\Registrar\Jeyserver\Exceptions\RunTimeException;
 
 class StatusAccount extends CommandBase
 {
@@ -11,16 +12,16 @@ class StatusAccount extends CommandBase
 
     public function execute(): void
     {
-        $response = $this->api->getClient()->get('fa/userpanel/profile/view', [
+        $this->setResponse($this->api->getClient()->get('fa/userpanel/profile/view', [
             'query' => [
                 'api' => 1,
                 'ajax' => 1,
             ],
-        ]);
-        $result = $response->json();
-        $this->setResult($result);
+        ]));
+        /** @var array{credit:float,currency:string} */
+        $result = $this->getResult();
         if (!$this->wasSuccessful()) {
-            throw new RunTimeException('JeyServer: can not get status of account! (' . json_encode($result) . ')');
+            throw new RunTimeException('JeyServer: can not get status of account! (' . ((string)$this->getResponse()->getBody()) . ')');
         }
         $this->credit = (float) $result['credit'];
         $this->currencyTitle = (string) $result['currency'];
